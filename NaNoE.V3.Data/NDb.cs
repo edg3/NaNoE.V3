@@ -17,18 +17,18 @@ public class NDb
             }
         }
         _connection = new SQLiteConnection(filePath);
-        _connection.CreateTable<Element>();
+        _connection.CreateTable<Elements>();
     }
 
-    public TableQuery<Element> Elements => _connection.Table<Element>();
+    public TableQuery<Elements> Elements => _connection.Table<Elements>();
 
-    public void AddElement(Data.Element element)
+    public void AddElement(Data.Elements element)
     {
         _connection.Insert(element);
         _connection.SaveTransactionPoint();
     }
 
-    public void RemoveElement(Data.Element elemenet)
+    public void RemoveElement(Data.Elements elemenet)
     {
         _connection.Delete(elemenet);
         _connection.SaveTransactionPoint();

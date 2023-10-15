@@ -2,7 +2,7 @@
 
 namespace NaNoE.V3.Data;
 
-public class Element
+public class Elements
 {
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }

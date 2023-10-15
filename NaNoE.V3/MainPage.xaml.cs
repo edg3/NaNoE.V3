@@ -10,31 +10,34 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
 
+        Thread picker = new Thread(async () =>
+        {
+            // Testing POC - can open nne files on Andoid AND Windows with this
+            // Delay here is the window needs to exist first before this is called or it gives an error
+            //  - Idea is: First page shows details and info like V2; you can "open last novel" if its in the same place
+            //  - Note: tested with a OneDrive nne on Windows; got '3398' test rows (var a); Android emulator has issues with my drives - apk built and put on my device didn't crash on same test
+            Thread.Sleep(5000);
+            var testFile = "";
+            try
+            {
+                var result = await FilePicker.Default.PickAsync();
+                if (result != null)
+                {
+                    testFile = result.FullPath;
+                }
 #if ANDROID
-        // Android works
-        var testFile = Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Download/test.nne");
-#else
-        // Windows works
-		var testFile = Path.Combine("Z:\\test", "test.db");
+                testFile = Path.Combine(Android.OS.Environment.ExternalStorageDirectory.AbsolutePath, "Download/" + testFile.Split('/').Last()); // TODO: swap from create in downloads logic if I can
 #endif
 
-        var testDb = new NDb(testFile);
-        if (testDb.Elements.Where(it => true).Count() == 0)
-        {
-            testDb.AddElement(new Data.Element()
+                var testDb = new NDb(testFile);
+                var a = testDb.Elements.Where(it => true).ToList();
+            }
+            catch (Exception ex)
             {
-                IdBefore = -1,
-                IdAfter = -1,
-                NItem = 1,
-                SData = "Cake",
-                Ignored = false
-            });
-        }
-        else
-        {
-            var first = testDb.Elements.Where(it => true).First();
-            testDb.RemoveElement(first);
-        }
+                var a = ex.Message;
+            }
+        });
+        picker.Start();
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
