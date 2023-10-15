@@ -15,7 +15,7 @@ public partial class MainPage : ContentPage
             // Testing POC - can open nne files on Andoid AND Windows with this
             // Delay here is the window needs to exist first before this is called or it gives an error
             //  - Idea is: First page shows details and info like V2; you can "open last novel" if its in the same place
-            //  - Note: tested with a OneDrive nne on Windows; got '3398' test rows (var a); Android emulator has issues with my drives - apk built and put on my device didn't crash on same test
+            //  - Note: tested with a OneDrive nne on Windows; got '3398' test rows (var a); Android emulator has issues with my drives - apk built and put on my device didn't crash on same test; but cant use OneDrive directly - would be fine local Downloads, not OneDrive (at this point)
             Thread.Sleep(5000);
             var testFile = "";
             try
