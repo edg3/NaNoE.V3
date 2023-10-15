@@ -31,6 +31,8 @@ public partial class MainPage : ContentPage
 
                 var testDb = new NDb(testFile);
                 var a = testDb.Elements.Where(it => true).ToList();
+                var b = testDb.Helpers.Where(it => true).ToList();
+                var c = testDb.HelperItems.Where(it => true).ToList();
             }
             catch (Exception ex)
             {
