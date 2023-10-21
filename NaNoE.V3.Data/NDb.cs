@@ -26,6 +26,10 @@ public class NDb : INotifyPropertyChanged
         _connection.CreateTable<HelperItems>();
     }
 
+    public static TableQuery<Elements> GElements => NDb.Instance.Elements;
+    public static TableQuery<Helpers> GHelpers => NDb.Instance.Helpers;
+    public static TableQuery<HelperItems> GHelperItems => NDb.Instance.HelperItems;
+
     public TableQuery<Elements> Elements => _connection.Table<Elements>();
     public TableQuery<Helpers> Helpers => _connection.Table<Helpers>();
     public TableQuery<HelperItems> HelperItems => _connection.Table<HelperItems>();
@@ -90,66 +94,40 @@ public class NDb : INotifyPropertyChanged
         //var list = _sqlConnection.CreateCommand();
         //list.CommandText = "SELECT id, idbefore, idafter FROM elements";
         //var answer = list.ExecuteReader();
-        //List<(long, long, long)> powerList = new List<(long, long, long)>();
-        //while (answer.Read())
-        //{
-        //    var a = answer.GetInt64(0);
-        //    var b = answer.GetInt64(1);
-        //    var c = answer.GetInt64(2);
-        //    powerList.Add((a, b, c));
-        //}
+        List<(long, long, long)> powerList = new List<(long, long, long)>();
+        var items = NDb.GElements.ToList();
+        foreach (var item in items)
+        {
+            var a = item.Id;
+            var b = item.IdBefore;
+            var c = item.IdAfter;
+            powerList.Add((a, b, c));
+        }
 
-        //var first = (from item in powerList
-        //             where item.Item2 == -1 /* Starts at -1 */
-        //             select item).FirstOrDefault();
-        //if (first.ToString() != "(0, 0, 0)")
-        //{
-        //    _map.Add((int)first.Item1);
-        //    int next = (int)first.Item3;
-        //    powerList.Remove(first);
+        var first = (from item in powerList
+                     where item.Item2 == -1 /* Starts at -1 */
+                     select item).FirstOrDefault();
+        if (first.ToString() != "(0, 0, 0)")
+        {
+            _map.Add((int)first.Item1);
+            int next = (int)first.Item3;
+            powerList.Remove(first);
 
-        //    while (next != -2) /* Ends at -2 */
-        //    {
-        //        first = (from item in powerList
-        //                 where item.Item1 == next
-        //                 select item).First();
-        //        _map.Add((int)first.Item1);
-        //        next = (int)first.Item3;
-        //        powerList.Remove(first);
-        //    }
-        //}
+            while (next != -2) /* Ends at -2 */
+            {
+                first = (from item in powerList
+                         where item.Item1 == next
+                         select item).First();
+                _map.Add((int)first.Item1);
+                next = (int)first.Item3;
+                powerList.Remove(first);
+            }
+        }
 
         _position = _map.Count;
         UpdateNItems();
         RefreshWordsBefore();
     }
-
-    /// <summary>
-    /// Open existion novel
-    /// </summary>
-    /// <param name="name">File folder and name of novel DB</param>
-    //public void Open(string name)
-    //{
-    //    _sqlConnection = new SQLiteConnection("Data Source=" + name + "; Version=3;");
-    //    _sqlConnection.Open();
-    //    _connected = true;
-
-    //    _position = 0;
-    //    GetWordCount();
-    //    GenerateMap();
-    //    RefreshHelpers();
-    //}
-
-    /// <summary>
-    /// Close connection
-    /// </summary>
-    //public void Close()
-    //{
-    //    _sqlConnection.Close();
-    //    _connected = false;
-
-    //    RefreshHelpers();
-    //}
 
     /// <summary>
     /// Insert an element 
@@ -180,50 +158,44 @@ public class NDb : INotifyPropertyChanged
             catch { }
         }
 
-        //var cmd1 = _sqlConnection.CreateCommand();
-        //cmd1.CommandText = "INSERT INTO elements (idbefore, idafter, nitem, sdata, ignored) VALUES (" + idbefore + ", " + idafter + ", " + nitem + ", '" + StringFormat(data) + "', " + (ignored ? "true" : "false") + ")";
-        //cmd1.ExecuteNonQuery();
+        var newElements = new Elements()
+        {
+            IdBefore = idbefore,
+            IdAfter = idafter,
+            NItem = nitem,
+            SData = data,
+            Ignored = ignored
+        };
+        NDb.Instance.AddElement(newElements);
 
-        //var cmd2 = _sqlConnection.CreateCommand();
-        //cmd2.CommandText = "SELECT max(id) FROM elements";
-        //var newid = cmd2.ExecuteScalar();
 
-        //if (nitem == 0)
-        //{
-        //    _wordCount += data.Split(' ').Length;
-        //}
+        if (nitem == 0)
+        {
+            _wordCount += data.Split(' ').Length;
+        }
 
-        //// update before if not -1
-        //if (-1 != idbefore)
-        //{
-        //    var cmd3 = _sqlConnection.CreateCommand();
-        //    cmd3.CommandText = "UPDATE elements SET idafter = " + newid + " WHERE id = " + idbefore;
-        //    cmd3.ExecuteNonQuery();
-        //}
+        // update before if not -1
+        if (-1 != idbefore)
+        {
+            var idBeforeItem = NDb.GElements.Where(it => it.Id == idbefore).First();
+            idBeforeItem.IdAfter = idafter;
+        }
 
-        //// update after if not -2
-        //if (-2 != idafter)
-        //{
-        //    var cmd4 = _sqlConnection.CreateCommand();
-        //    cmd4.CommandText = "UPDATE elements SET idbefore = " + newid + " WHERE id = " + idafter;
-        //    cmd4.ExecuteNonQuery();
-        //}
+        // update after if not -2
+        if (-2 != idafter)
+        {
+            var idAfterItem = NDb.GElements.Where(it => it.Id == idafter).First();
+            idAfterItem.IdBefore = idbefore;
+        }
 
-        //// update position
-        //_map.Insert(_position, int.Parse(newid.ToString()));
-        //++_position;
+        _connection.SaveTransactionPoint();
+
+        // update position
+        _map.Insert(_position, newElements.Id);
+        ++_position;
 
         UpdateNItems();
     }
-
-    /// <summary>
-    /// Helpers
-    /// </summary>
-    //private List<Helpers> _helpers = new List<Helpers>();
-    //public List<Helpers> Helpers
-    //{
-    //    get => _helpers;
-    //}
 
     private Helpers _selectedHelper = null;
     public Helpers SelectedHelper
