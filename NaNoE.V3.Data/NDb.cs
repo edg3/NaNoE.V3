@@ -24,25 +24,33 @@ public class NDb : INotifyPropertyChanged
         _connection.CreateTable<Elements>();
         _connection.CreateTable<Helpers>();
         _connection.CreateTable<HelperItems>();
+        _connection.CreateTable<ChangeLog>();
+        _connection.CreateTable<TimeTracking>();
     }
 
-    public static TableQuery<Elements> GElements => NDb.Instance.Elements;
-    public static TableQuery<Helpers> GHelpers => NDb.Instance.Helpers;
-    public static TableQuery<HelperItems> GHelperItems => NDb.Instance.HelperItems;
+    public static TableQuery<Elements> Element => NDb.Instance.Elements;
+    public static TableQuery<Helpers> Helper => NDb.Instance.Helpers;
+    public static TableQuery<HelperItems> HelperItem => NDb.Instance.HelperItems;
+    public static TableQuery<ChangeLog> ChangeLog => NDb.Instance.ChangeLogs;
+    public static TableQuery<TimeTracking> TimeTracking => NDb.Instance.TimeTrackings;
 
     public TableQuery<Elements> Elements => _connection.Table<Elements>();
     public TableQuery<Helpers> Helpers => _connection.Table<Helpers>();
     public TableQuery<HelperItems> HelperItems => _connection.Table<HelperItems>();
+    public TableQuery<ChangeLog> ChangeLogs => _connection.Table<ChangeLog>();
+    public TableQuery<TimeTracking> TimeTrackings => _connection.Table<TimeTracking>();
     
 
     public void AddElement(Data.Elements element)
     {
+        // TODO: log
         _connection.Insert(element);
         _connection.SaveTransactionPoint();
     }
 
     public void RemoveElement(Data.Elements elemenet)
     {
+        // TODO: log
         _connection.Delete(elemenet);
         _connection.SaveTransactionPoint();
     }
@@ -95,7 +103,7 @@ public class NDb : INotifyPropertyChanged
         //list.CommandText = "SELECT id, idbefore, idafter FROM elements";
         //var answer = list.ExecuteReader();
         List<(long, long, long)> powerList = new List<(long, long, long)>();
-        var items = NDb.GElements.ToList();
+        var items = NDb.Element.ToList();
         foreach (var item in items)
         {
             var a = item.Id;
@@ -177,14 +185,14 @@ public class NDb : INotifyPropertyChanged
         // update before if not -1
         if (-1 != idbefore)
         {
-            var idBeforeItem = NDb.GElements.Where(it => it.Id == idbefore).First();
+            var idBeforeItem = NDb.Element.Where(it => it.Id == idbefore).First();
             idBeforeItem.IdAfter = idafter;
         }
 
         // update after if not -2
         if (-2 != idafter)
         {
-            var idAfterItem = NDb.GElements.Where(it => it.Id == idafter).First();
+            var idAfterItem = NDb.Element.Where(it => it.Id == idafter).First();
             idAfterItem.IdBefore = idbefore;
         }
 
