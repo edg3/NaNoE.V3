@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.ComponentModel;
+using NaNoE.V3.Data;
 
 namespace NaNoE.V2.Data;
 
@@ -67,8 +68,8 @@ public class DataConnection : INotifyPropertyChanged
     /// <param name="name">File location and name to create.</param>
     public void Create(string name)
     {
-        File.Create(name);
-        _sqlConnection = new SqliteConnection("Data Source=" + name + "; Version=3;");
+        File.Create(name).Close();
+        _sqlConnection = new SqliteConnection("Data Source=" + name + "");
         _sqlConnection.Open();
         _connected = true;
 
@@ -81,20 +82,110 @@ public class DataConnection : INotifyPropertyChanged
         var tbl3 = _sqlConnection.CreateCommand();
         tbl3.CommandText = "CREATE TABLE helperitems (id INTEGER primary key AUTOINCREMENT, helperid INT, data TEXT)";
         tbl3.ExecuteNonQuery();
+        var tbl4 = _sqlConnection.CreateCommand();
+        tbl4.CommandText = "CREATE TABLE sessions (id INTEGER primary key AUTOINCREMENT, startedat VARCHAR(64), endedat VARCHAR(64), paragraphstart INT, paragraphend INT, chapterstart INT, chapterend INT, notestart INT, noteend INT, bookmarkstart INT, bookmarkend INT, wordsstart INT, wordsend INT)";
+        tbl4.ExecuteNonQuery();
 
+        StartSession();
         _position = 0;
         GenerateMap();
         _wordCount = 0;
         RefreshHelpers();
 
-        if (File.Exists("last")) File.Delete("last");
-        var last = File.OpenWrite("last");
-        using (var ow = new StreamWriter(last))
+        if (DeviceInfo.Platform == DevicePlatform.Android)
         {
-            ow.Write(name);
         }
-        last.Close();
+        else
+        {
+            if (File.Exists("last")) File.Delete("last");
+            var last = File.OpenWrite("last");
+            using (var ow = new StreamWriter(last))
+            {
+                ow.Write(name);
+            }
+            last.Close();
+        }
+    }
 
+    private Session _session { get; set; }
+
+    /// <summary>
+    /// Start a time tracking Session
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    private void StartSession()
+    {
+        _session = new()
+        {
+            StartedAt = DateTime.Now,
+            EndedAt = DateTime.Now
+        };
+
+        //Paragraph = 1
+        var paraCmd = _sqlConnection.CreateCommand();
+        paraCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=1";
+        var para = (Int64)paraCmd.ExecuteScalar();
+        _session.ParagraphStart = para;
+        _session.ParagraphEnd = para;
+
+        //Chapter = 0
+        var chapCmd = _sqlConnection.CreateCommand();
+        chapCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=0";
+        var chap = (Int64)chapCmd.ExecuteScalar();
+        _session.ParagraphStart = chap;
+        _session.ParagraphEnd = chap;
+
+        // Note = 2
+        var noteCmd = _sqlConnection.CreateCommand();
+        noteCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=2";
+        var note = (Int64)noteCmd.ExecuteScalar();
+        _session.NoteStart = note;
+        _session.NoteEnd = note;
+
+        // Bookmark = 3
+        var bookCmd = _sqlConnection.CreateCommand();
+        bookCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=3";
+        var book = (Int64)bookCmd.ExecuteScalar();
+        _session.BookmarkStart = book;
+        _session.BookmarkEnd = book;
+
+        // Words
+        _session.WordsStart = _wordCount;
+        _session.WordsEnd = _wordCount;
+    }
+
+    public void UpdateSession()
+    {
+        if (_session is null) return;
+
+        _session.EndedAt = DateTime.Now;
+
+        //Paragraph = 1
+        var paraCmd = _sqlConnection.CreateCommand();
+        paraCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=1";
+        var para = (Int64)paraCmd.ExecuteScalar();
+        _session.ParagraphEnd = para;
+
+        //Chapter = 0
+        var chapCmd = _sqlConnection.CreateCommand();
+        chapCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=0";
+        var chap = (Int64)chapCmd.ExecuteScalar();
+        _session.ParagraphEnd = chap;
+
+        // Note = 2
+        var noteCmd = _sqlConnection.CreateCommand();
+        noteCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=2";
+        var note = (Int64)noteCmd.ExecuteScalar();
+        _session.NoteEnd = note;
+
+        // Bookmark = 3
+        var bookCmd = _sqlConnection.CreateCommand();
+        bookCmd.CommandText = "SELECT COUNT(id) FROM elements WHERE nitem=3";
+        var book = (Int64)bookCmd.ExecuteScalar();
+        _session.BookmarkEnd = book;
+
+        // Words
+        _session.WordsEnd = _wordCount;
     }
 
     /// <summary>
@@ -157,10 +248,21 @@ public class DataConnection : INotifyPropertyChanged
     /// <param name="name">File folder and name of novel DB</param>
     public void Open(string name)
     {
-        _sqlConnection = new SqliteConnection("Data Source=" + name + "; Version=3;");
+        _sqlConnection = new SqliteConnection("Data Source=" + name + ";");
         _sqlConnection.Open();
         _connected = true;
 
+        var cmd = _sqlConnection.CreateCommand();
+        cmd.CommandText = "SELECT id FROM sessions";
+        var answer = cmd.ExecuteReader();
+        while (answer.Read())
+        {
+            var a = answer.GetInt32(0);
+        }
+
+        // TOOD: check if it contains 'sessions' table
+
+        StartSession();
         _position = 0;
         GetWordCount();
         GenerateMap();
@@ -172,6 +274,12 @@ public class DataConnection : INotifyPropertyChanged
     /// </summary>
     public void Close()
     {
+        _session.EndedAt = DateTime.Now;
+        var sessCmd = _sqlConnection.CreateCommand();
+        sessCmd.CommandText = $"INSERT INTO sessions(startedat, endedat, paragraphstart, paragraphend, chapterstart, chapterend, notestart, noteend, bookmarkstart, bookmarkend, wordsstart, wordsend) VALUES ('{_session.StartedAt}','{_session.EndedAt}',{_session.ParagraphStart},{_session.ParagraphEnd},{_session.ChapterStart},{_session.ChapterEnd},{_session.NoteStart},{_session.NoteEnd},{_session.BookmarkStart},{_session.BookmarkEnd},{_session.WordsStart},{_session.WordsEnd})";
+        sessCmd.ExecuteNonQuery();
+        _session = null;
+
         _sqlConnection.Close();
         _connected = false;
 
@@ -715,6 +823,7 @@ public class DataConnection : INotifyPropertyChanged
         _nPrevious = GetPrevious();
 
         RefreshWordsBefore();
+        UpdateSession();
     }
 
     /// <summary>
@@ -1020,7 +1129,7 @@ public class DataConnection : INotifyPropertyChanged
         _wordsBeforePosition = final;
 
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("WordsBefore"));
-    
+
     }
 
     /// <summary>
