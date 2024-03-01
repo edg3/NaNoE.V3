@@ -16,4 +16,11 @@ public class Session
     public long BookmarkEnd { get; set; }
     public long WordsStart { get; set; }
     public long WordsEnd { get; set; }
+
+    internal bool ValChange()
+    {
+        // What if they leave the app open over night?
+        // Figured it out - if last time on it was "too long ago" it doesnt update; it created new!
+        return ParagraphStart != ParagraphEnd || ChapterStart != ChapterEnd || NoteStart != NoteEnd || BookmarkStart != BookmarkEnd || WordsStart != WordsEnd;
+    }
 }

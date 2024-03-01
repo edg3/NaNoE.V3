@@ -274,10 +274,14 @@ public class DataConnection : INotifyPropertyChanged
     /// </summary>
     public void Close()
     {
-        _session.EndedAt = DateTime.Now;
-        var sessCmd = _sqlConnection.CreateCommand();
-        sessCmd.CommandText = $"INSERT INTO sessions(startedat, endedat, paragraphstart, paragraphend, chapterstart, chapterend, notestart, noteend, bookmarkstart, bookmarkend, wordsstart, wordsend) VALUES ('{_session.StartedAt}','{_session.EndedAt}',{_session.ParagraphStart},{_session.ParagraphEnd},{_session.ChapterStart},{_session.ChapterEnd},{_session.NoteStart},{_session.NoteEnd},{_session.BookmarkStart},{_session.BookmarkEnd},{_session.WordsStart},{_session.WordsEnd})";
-        sessCmd.ExecuteNonQuery();
+        if (_session.ValChange())
+        {
+            // So you can open to read and not do writing sessions?
+            _session.EndedAt = DateTime.Now;
+            var sessCmd = _sqlConnection.CreateCommand();
+            sessCmd.CommandText = $"INSERT INTO sessions(startedat, endedat, paragraphstart, paragraphend, chapterstart, chapterend, notestart, noteend, bookmarkstart, bookmarkend, wordsstart, wordsend) VALUES ('{_session.StartedAt}','{_session.EndedAt}',{_session.ParagraphStart},{_session.ParagraphEnd},{_session.ChapterStart},{_session.ChapterEnd},{_session.NoteStart},{_session.NoteEnd},{_session.BookmarkStart},{_session.BookmarkEnd},{_session.WordsStart},{_session.WordsEnd})";
+            sessCmd.ExecuteNonQuery();
+        }
         _session = null;
 
         _sqlConnection.Close();
