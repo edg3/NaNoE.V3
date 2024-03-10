@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NaNoE.V3.Views.Windows.TestingView">
+    <VerticalStackLayout>
+        <Label 
+            Text="Testing:"
+            VerticalOptions="Start" 
+            HorizontalOptions="Center"
+            TextColor="#020202" />
+
+        <Button
+            Text="Test Import nne"
+            Command="{Binding TestImportCommand}" />
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Label 
+                Grid.Column="0"
+                Text="{Binding RowsInDBMsg}"
+                VerticalOptions="Start" 
+                HorizontalOptions="Center"
+                TextColor="#020202"
+                Margin="6" />
+
+            <Button
+                Grid.Column="1"
+                Text="Rows In DB"
+                Command="{Binding RowsInDB}"
+                Margin="6" />
+        </Grid>
+    </VerticalStackLayout>
+</ContentView>

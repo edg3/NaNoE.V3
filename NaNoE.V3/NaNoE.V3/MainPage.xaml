@@ -3,7 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="NaNoE.V3.MainPage">
 
-    <Grid>
-    </Grid>
+    <ScrollView>
+        <Frame
+            x:Name="frmContent"
+            BackgroundColor="#FEFEFE" />
+    </ScrollView>
 
 </ContentPage>
