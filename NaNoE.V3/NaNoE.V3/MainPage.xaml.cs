@@ -8,10 +8,45 @@ public partial class MainPage : ContentPage
     {
         InitializeComponent();
 
-        new NDb();
+        CheckAndRequestStoragePermissions();
 
-        new ViewModelLocator();
-        Nav.I.Content = frmContent;
-        Nav.GoTo(Loc.Testing);
+        try
+        {
+            new NDb();
+
+            new ViewModelLocator();
+            Nav.I.Content = frmContent;
+#if WINDOWS
+            Nav.GoTo(Loc.Testing);
+#else
+            Nav.GoTo(Loc.SelectNovel);
+#endif
+        }
+        catch { }
+    }
+
+    private async void CheckAndRequestStoragePermissions()
+    {
+        var status = await Permissions.CheckStatusAsync<Permissions.StorageRead>();
+        if (status != PermissionStatus.Granted)
+        {
+            status = await Permissions.RequestAsync<Permissions.StorageRead>();
+            if (status != PermissionStatus.Granted)
+            {
+                // Handle permission denied scenario
+                return;
+            }
+        }
+
+        status = await Permissions.CheckStatusAsync<Permissions.StorageWrite>();
+        if (status != PermissionStatus.Granted)
+        {
+            status = await Permissions.RequestAsync<Permissions.StorageWrite>();
+            if (status != PermissionStatus.Granted)
+            {
+                // Handle permission denied scenario
+                return;
+            }
+        }
     }
 }

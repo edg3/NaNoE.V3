@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="NaNoE.V3.Views.Mobile.SelectNovelView">
+    <StackLayout>
+        <Label 
+            Text="Select Novel"
+            HorizontalOptions="Center" />
+
+        <Grid HeightRequest="450" BackgroundColor="#EFEFEF">
+            <ListView 
+                x:Name="NovelList"
+                ItemsSource="{Binding Novels}"
+                SelectedItem="{Binding SelectedNovel, Mode=TwoWay}"
+                SelectionMode="Single">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Grid Margin="4" BackgroundColor="#FEFEFE">
+                                <Label 
+                                    Text="{Binding Title}" />
+                            </Grid>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+        <Grid HeightRequest="84">
+            <!-- stats on selected novel -->
+        </Grid>
+
+        <Grid HeightRequest="42">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Text="Import" Command="{Binding ImportText}" />
+
+            <Button Grid.Column="2" Text="Open" />
+        </Grid>
+    </StackLayout>
+</ContentView>

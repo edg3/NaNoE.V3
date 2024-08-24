@@ -7,6 +7,13 @@ namespace NaNoE.V3.Data;
 public class NDb : DbContext
 {
     public static NDb I { get; private set; }
+    public static DbSet<Novel> Novels => I.Novel;
+    public static DbSet<Item> Items => I.Item;
+    public static DbSet<NoteCategory> NoteCategories => I.NoteCategory;
+    public static DbSet<NoteItem> NoteItems => I.NoteItem;
+    public static DbSet<NoteName> NoteNames => I.NoteName;
+    public static DbSet<WritingLog> WritingLogs => I.WritingLog;
+
     public NDb()
     {
         I = this;
@@ -24,9 +31,13 @@ public class NDb : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-#if ANDROID
+#if !WINDOWS
         string appFolder = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-        string dbPath = Path.Combine(appFolder, "nne_v3.db");
+        string dbPath = Path.Combine(appFolder, "nne_v3.db").Replace("/Documents/", "/");
+        if (!File.Exists(dbPath))
+        {
+            File.Create(dbPath).Close();
+        }
         optionsBuilder.UseSqlite($"Data Source={dbPath}");
 #else
         optionsBuilder.UseSqlite("Data Source=nne_v3.db");
@@ -45,9 +56,9 @@ public class NDb : DbContext
 
     public void ImportRaw(string novelName, string desciptShort, string descriptBack, string genre, string rawText)
     {
-        #if DEBUG
+#if DEBUG
         var dtStart = DateTime.Now;
-        #endif
+#endif
 
         CurrentNovel = new()
         {
@@ -126,7 +137,7 @@ public class NDb : DbContext
                         NoteItem.Add(ni);
                         SaveChanges();
                     }
-                    break;  
+                    break;
             }
 
         }
@@ -164,8 +175,8 @@ public class NDb : DbContext
             prev.BeforeID = next.ID;
             SaveChanges();
         }
-        #if DEBUG
+#if DEBUG
         var tm = (DateTime.Now - dtStart).TotalSeconds;
-        #endif
+#endif
     }
 }
